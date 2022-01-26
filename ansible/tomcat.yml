@@ -1,0 +1,90 @@
+---
+- name: install and set up tomcat service
+  hosts: all
+  become: yes
+  tasks:
+   - name: install Java 1.8
+     apt:
+       name: openjdk-8-jdk
+       state: present
+       update_cache: yes
+
+   - name: add group "tomcat"
+     group:
+       name: tomcat
+
+   - name: download tomcat
+     get_url:
+             url: https://archive.apache.org/dist/tomcat/tomcat-8/v8.5.31/bin/apache-tomcat-8.5.31.tar.gz
+             dest: /tmp/apache-tomcat-8.5.31.tar.gz
+
+   - name: extract tomcat archive
+     unarchive:  ## tar -xzf tarfile, by default source is always controller
+             src: /tmp/apache-tomcat-8.5.31.tar.gz
+             dest: /opt
+             remote_src: yes
+
+   - name: create symlink
+     file:  ## ln -s /opt/tomcat /opt/apache-tomcat-8.5.31
+             src: /opt/apache-tomcat-8.5.31
+             path: /opt/tomcat
+             state: link
+
+   - name: add user 'tomcat'
+     user: ##useradd  tomcat -G tomcat
+             name: tomcat
+             group: tomcat
+             shell: /bin/flase
+             home: /opt/tomcat
+
+   - name: change the ownership of Tomcat installation
+     file: ## chmod 755 -R /opt/tomcat,chown tomcat:tomcat -R /opt/tomcat
+             path: /opt/tomcat
+             owner: tomcat
+             group: tomcat
+             mode: 0755
+             state: directory
+             recurse: yes
+
+   - name: create tomcat.service file
+     file: ## touch /etc/systemd/system/tomcat.service
+             path: /etc/systemd/system/tomcat.service
+             state: touch
+
+   - name: create tomcat.service file
+     blockinfile:
+             path: /etc/systemd/system/tomcat.service
+             block: |
+                [Unit]
+                Description=Apache Tomcat Web Application Container
+                After=syslog.target network.target
+                [Service]
+                Type=forking
+                Environment="JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre"
+                Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
+                Environment="CATALINA_BASE=/opt/tomcat/"
+                Environment="CATALINA_HOME=/opt/tomcat/"
+                Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+                Environment="JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+                ExecStart=/opt/tomcat/bin/startup.sh
+                ExecStop=/opt/tomcat/bin/shutdown.sh
+                User=tomcat
+                Group=tomcat
+                UMask=0007
+                RestartSec=10
+                Restart=always
+                [Install]
+                WantedBy=multi-user.target
+
+   - name: enable & start tomcat service
+     systemd: ## systemctl enable tomcat, systecctl start tomcat
+              name: tomcat
+              state: started
+              enabled: yes
+
+   - name: validate tomcat is running
+     shell: service tomcat status
+     register: tstatus
+
+   - debug:
+              var: tstatus.stdout_lines

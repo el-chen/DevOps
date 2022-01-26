@@ -1,0 +1,4 @@
+#password files#
+*.pass
+*.key
+*.passwd
