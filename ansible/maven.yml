@@ -1,0 +1,57 @@
+---
+- name: install and set up Apache Maven
+  hosts: all
+  become: yes
+  tasks:
+   - name: install software-properties
+     apt:
+       name: software-properties-common
+       state: present
+       update_cache: yes
+
+   - name: add ppa repo
+     ansible.builtin.apt_repository:
+       repo: 'ppa:webupd8team/java'
+       state: present
+
+   - name: install default-jdk
+     apt:
+       name: default-jdk
+       state: present
+       update_cache: yes
+
+   - name: add group 'edureka'
+     group:
+       name: edureka
+
+   - name: add user 'edureka'
+     user:
+       name: edureka
+       shell: /bin/bash
+       groups: edureka
+       home: /home/edureka
+
+   - name: create a download folder
+     file:
+       path: /home/edureka/download
+       owner: edureka
+       group: edureka
+       mode: 0775
+       recurse: yes
+
+   - name: download apache maven
+     get_url:
+       url: http://apache.mirror.digitalpacific.com.au/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+       dest: /home/edureka/download/apache-maven-3.3.9-bin.tar.gz
+
+   - name: extract apache maven
+     unarchive:
+       src: /home/edureka/download/apache-maven-3.3.9-bin.tar.gz
+       dest: /opt
+       remote_src: yes
+
+   - name: create a s-link
+     file:
+        src: /opt/apache-maven-3.3.9/bin/mvn
+        path: /usr/bin/mvn
+        state: link
