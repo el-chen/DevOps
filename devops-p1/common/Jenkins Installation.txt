@@ -1,0 +1,54 @@
+================ Jenkins Unbuntu Setup =========================
+
+
+
+Install JAVA
+ 
+	sudo add-apt-repository ppa:openjdk-r/ppa
+	sudo apt-get update
+	sudo apt-get install -y openjdk-8-jdk
+	
+	### to install jdk 11 use below (choose to install either jdk 8 or 11 - both are not required )
+	
+	sudo apt-get install -y openjdk-11-jdk
+
+Install Maven  ( on Jenkins machine )
+
+	cd /tmp ; sudo wget https://dlcdn.apache.org/maven/maven-3/3.8.4/binaries/apache-maven-3.8.4-bin.tar.gz
+	cd /tmp ; sudo tar -xzf apache-maven-3.8.4-bin.tar.gz -C  /opt/
+
+Install Jenkins
+
+        sudo wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
+	sudo echo deb https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list
+	sudo apt-get update
+	sudo apt-get install jenkins
+
+
+=== verifym ===
+root@jmaster:/opt/apache-maven-3.8.4/bin# git --version
+git version 2.17.1
+root@jmaster:/opt/apache-maven-3.8.4/bin# java -version
+openjdk version "1.8.0_312"
+OpenJDK Runtime Environment (build 1.8.0_312-8u312-b07-0ubuntu1~18.04-b07)
+OpenJDK 64-Bit Server VM (build 25.312-b07, mixed mode)
+root@jmaster:/opt/apache-maven-3.8.4/bin# /opt/apache-maven-3.8.4/bin/mvn --version
+Apache Maven 3.8.4 (9b656c72d54e5bacbed989b64718c159fe39b537)
+Maven home: /opt/apache-maven-3.8.4
+Java version: 1.8.0_312, vendor: Private Build, runtime: /usr/lib/jvm/java-8-openjdk-amd64/jre
+Default locale: en, platform encoding: UTF-8
+OS name: "linux", version: "5.4.0-1063-aws", arch: "amd64", family: "unix"
+
+=============================================================================
+
+Set JAVA_HOME & MAVEN_HOME as environment variables on Jenkins machine
+
+	sudo echo "MAVEN_HOME=\"/opt/apache-maven-3.8.4\"" >> /etc/profile
+	sudo echo "JAVA_HOME=\"/usr/lib/jvm/java-8-openjdk-amd64\"" >> /etc/profile 
+	sudo echo "PATH=\$JAVA_HOME/bin:\$MAVEN_HOME/bin:\$PATH" >> /etc/profile
+	source /etc/profile
+	
+	sudo systemctl start jenkins
+	sudo systemctl stop/status jenkins
+
+==================== go to Jenkins UI ========================================
